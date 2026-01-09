@@ -2,8 +2,8 @@
 
 import {
   convertMarketingTemplateToUtility,
-  ConvertMarketingToUtilityInput,
-  ConvertMarketingToUtilityOutput,
+  ConvertMarketingTemplateToUtilityInput,
+  ConvertMarketingTemplateToUtilityOutput,
 } from '@/ai/flows/convert-marketing-to-utility';
 import {
   scoreTemplateCompliance,
@@ -26,8 +26,8 @@ type ActionResult<T> =
   | { success: false; error: string };
 
 export async function convertTemplateAction(
-  input: ConvertMarketingToUtilityInput
-): Promise<ActionResult<ConvertMarketingToUtilityOutput>> {
+  input: ConvertMarketingTemplateToUtilityInput
+): Promise<ActionResult<ConvertMarketingTemplateToUtilityOutput>> {
   try {
     const result = await convertMarketingTemplateToUtility(input);
     return { success: true, data: result };

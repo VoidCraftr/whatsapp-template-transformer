@@ -8,8 +8,8 @@
  * - CheckTemplatePolicyComplianceOutput - The return type for the checkTemplatePolicyCompliance function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const CheckTemplatePolicyComplianceInputSchema = z.object({
   templateText: z
@@ -40,26 +40,30 @@ export async function checkTemplatePolicyCompliance(
 
 const prompt = ai.definePrompt({
   name: 'checkTemplatePolicyCompliancePrompt',
-  input: {schema: CheckTemplatePolicyComplianceInputSchema},
-  output: {schema: CheckTemplatePolicyComplianceOutputSchema},
-  prompt: `You are an expert in WhatsApp Business API template policies.
+  input: { schema: CheckTemplatePolicyComplianceInputSchema },
+  output: { schema: CheckTemplatePolicyComplianceOutputSchema },
+  prompt: `You are a Meta Policy Enforcement Agent. Your job is to approve or reject WhatsApp template submissions based on the Commerce and Business Messaging policies.
 
-  Analyze the following WhatsApp template text and determine if it is compliant with Meta's policies. Provide a boolean value for compliance, and detailed notes explaining the compliance status, referencing specific policy violations if any.
+  ### VIOLATION CHECKLIST:
+  1. **Formatting**:
+     - Variables must be sequential ({{1}}, {{2}}). Random numbers like {{54}} are rejected.
+     - Variables cannot have special characters (e.g. {{$1}}).
+     - "Floating parameters" (lines containing *only* variables) are often rejected.
 
+  2. **Content**:
+     - **Abusive/Threatening**: Harassment, hate speech.
+     - **Deceptive**: "You won a prize!" scams.
+     - **Prohibited**: Gambling, alcohol, subscriptions (Netflix-like), health/medical data requests.
+
+  3. **Category Mismatch**:
+     - If it sounds like a sale but uses "Utility" phrasing to bypass checks, REJECT it.
+
+  ### INPUT:
   Template Text: {{{templateText}}}
 
-  Consider these compliance rules:
-  - Utility Templates: No promotional language, focus on transactional updates
-  - Variable Format: {{'{'}{'{'}1{'}'}{'}'}}, {{'{'}{'{'}2{'}'}{'}'}} sequential, not at start/end
-  - Content Rules: No spam, prohibited items, or misleading claims
-  - Category Matching: Use correct category (UTILITY, TRANSACTIONAL, etc.)
-  - Clear Purpose: Single, obvious template intention
-
-  Output in JSON format:
-  {
-    "isCompliant": true/false,
-    "complianceNotes": "Detailed notes on compliance status."
-  }`,
+  ### OUTPUT:
+  - **isCompliant**: true only if NO violations are found.
+  - **complianceNotes**: If REJECTED, cite the specific policy clause. If APPROVED, mention "Clean and compliant."`,
 });
 
 const checkTemplatePolicyComplianceFlow = ai.defineFlow(
@@ -69,7 +73,7 @@ const checkTemplatePolicyComplianceFlow = ai.defineFlow(
     outputSchema: CheckTemplatePolicyComplianceOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const { output } = await prompt(input);
     return output!;
   }
 );

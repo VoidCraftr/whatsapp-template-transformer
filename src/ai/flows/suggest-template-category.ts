@@ -8,8 +8,8 @@
  * - SuggestTemplateCategoryOutput - The return type for the suggestTemplateCategory function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const SuggestTemplateCategoryInputSchema = z.object({
   templateText: z.string().describe('The text content of the template.'),
@@ -38,16 +38,24 @@ export async function suggestTemplateCategory(
 
 const prompt = ai.definePrompt({
   name: 'suggestTemplateCategoryPrompt',
-  input: {schema: SuggestTemplateCategoryInputSchema},
-  output: {schema: SuggestTemplateCategoryOutputSchema},
-  prompt: `You are an expert in WhatsApp Business API templates. Your task is to suggest the most appropriate category for a given template, and explain your reasoning.
+  input: { schema: SuggestTemplateCategoryInputSchema },
+  output: { schema: SuggestTemplateCategoryOutputSchema },
+  prompt: `You are a Meta Template Allocator. Your task is to assign the CORRECT billing category to a template message.
 
-  The available categories are UTILITY, TRANSACTIONAL and MARKETING.
+  ### DEFINITIONS:
+  1. **AUTHENTICATION**: Contains a one-time password (OTP) or code. *Keywords: code, verification, reset.*
+  2. **UTILITY**: relates to a *specific* transaction or active recurring billing cycle. *Keywords: order #, shipment, payment failed, statement.*
+  3. **MARKETING**: PROMOTIONS, offers, upsells, OR general brand awareness that isn't tied to a specific recent transaction. *Keywords: sale, off, buy, check out, new arrival, feedback survey.*
 
+  ### IMPORTANT RULE:
+  If a message is mixed (e.g., an order update that *also* suggests a new product), it defaults to **MARKETING**. This is the "Mixed Category" rule.
+
+  ### INPUT:
   Template Text: {{{templateText}}}
 
-  Consider the template text and determine the best category. Provide a short explanation of why you chose that category in the reasoning field.
-  `,
+  ### OUTPUT:
+  - **suggestedCategory**: One of [UTILITY, AUTHENTICATION, MARKETING].
+  - **reasoning**: Explain why. If it's a "Mixed" case, explicitly mention that the promotional content forced it into Marketing.`,
 });
 
 const suggestTemplateCategoryFlow = ai.defineFlow(
@@ -57,7 +65,7 @@ const suggestTemplateCategoryFlow = ai.defineFlow(
     outputSchema: SuggestTemplateCategoryOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const { output } = await prompt(input);
     return output!;
   }
 );

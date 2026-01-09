@@ -9,8 +9,8 @@
  * - ScoreTemplateComplianceOutput - The output type for the scoring function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const ScoreTemplateComplianceInputSchema = z.object({
   templateText: z.string().describe('The text of the WhatsApp template to score.'),
@@ -41,22 +41,36 @@ export async function scoreTemplateCompliance(
 
 const scoreTemplateCompliancePrompt = ai.definePrompt({
   name: 'scoreTemplateCompliancePrompt',
-  input: {schema: ScoreTemplateComplianceInputSchema},
-  output: {schema: ScoreTemplateComplianceOutputSchema},
-  prompt: `You are an expert WhatsApp template analyst. You will score the given template based on the following criteria, on a scale of 1-10:
+  input: { schema: ScoreTemplateComplianceInputSchema },
+  output: { schema: ScoreTemplateComplianceOutputSchema },
+  prompt: `You are a senior WhatsApp Template Quality Auditor. Your job is to strictly grade templates before they are sent to Meta for review.
 
-  - Compliance (3 points): Meta policy adherence
-  - Clarity (3 points): Message understandability
-  - Engagement (2 points): User response likelihood
-  - Optimization (2 points): Best practices follow-through
+  ### GRADING RUBRIC (Total 10 Points):
+  1. **Compliance (Max 3 Points)**:
+     - 3: Perfect adherence. Proper variable usage ({{1}}), no abusive language, correct category intent.
+     - 1-2: Minor issues (e.g., variable format \`[1]\` instead of \`{{1}}\`, ambiguous category).
+     - 0: Major violation (sales words in Utility, non-compliant content).
 
-  Provide a detailed analysis of the template, including areas for improvement.  Determine the overall compliance status (PASS/FAIL) and provide optimization suggestions.
+  2. **Clarity (Max 3 Points)**:
+     - 3: Crystal clear purpose. User knows exactly *why* they received it.
+     - 1-2: Slightly wordy or ambiguous.
+     - 0: Confusing or misleading.
 
+  3. **Engagement (Max 2 Points)**:
+     - 2: Clear Call-to-Action (CTA), short & punchy (< 300 chars).
+     - 1: Passable but dry.
+     - 0: Boring, wall of text, or no clear next step.
+
+  4. **Optimization (Max 2 Points)**:
+     - 2: Uses variables for personalization, has a header/footer if needed, correct tone.
+     - 0-1: Missed opportunities for variables or media.
+
+  ### INPUT:
   Template: {{{templateText}}}
 
-  Ensure that the complianceScore field reflects the sum of compliancePoints, clarityPoints, engagementPoints, and optimizationPoints.
-  Make sure the output is valid JSON.
-  `,
+  ### OUTPUT:
+  Analyze rigorously. Be tough but fair.
+  Return the scores breakdown, total score, pass/fail status, and actionable advice to improve the score.`,
 });
 
 const scoreTemplateComplianceFlow = ai.defineFlow(
@@ -66,7 +80,7 @@ const scoreTemplateComplianceFlow = ai.defineFlow(
     outputSchema: ScoreTemplateComplianceOutputSchema,
   },
   async input => {
-    const {output} = await scoreTemplateCompliancePrompt(input);
+    const { output } = await scoreTemplateCompliancePrompt(input);
     return output!;
   }
 );
